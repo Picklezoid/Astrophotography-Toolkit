@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astrophotography Toolkit</title>
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="/styles.css">
+    
+    <!-- External Libs -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+</head>
+<body>
+
+<!-- Main Container -->
+<div class="container">
+    <h1>Astrophotography Toolkit</h1>
+
+    <!-- Navigation -->
+    <nav class="top-nav">
+        <a href="#calculator" class="nav-link active" data-page="calculator-page">NPF Calculator</a>
+        <a href="#analyzer" class="nav-link" data-page="analyzer-page">Image Analyzer</a>
+    </nav>
+
+    <!-- Page: Calculator -->
+    <div id="calculator-page" class="page active">
+        <h2>1. Observer Location</h2>
+        <div class="input-group-split">
+            <div class="input-group">
+                <label for="latitude">Latitude (°)</label>
+                <input type="number" id="latitude" placeholder="e.g., 28.45" step="any">
+            </div>
+            <div class="input-group">
+                <label for="longitude">Longitude (°)</label>
+                <input type="number" id="longitude" placeholder="e.g., 77.02" step="any">
+            </div>
+        </div>
+        <div class="info">Enter your geographical coordinates for accurate, time-of-observation calculations.</div>
+
+        <hr>
+
+        <h2>2. Camera & Lens Settings</h2>
+        <div class="input-group">
+            <label for="pixelPitch">Pixel Pitch (P) in µm</label>
+            <input type="number" id="pixelPitch" placeholder="e.g., 3.76" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="focalLength">Focal Length (F) in mm</label>
+            <input type="number" id="focalLength" placeholder="e.g., 50">
+        </div>
+        <div class="input-group">
+            <label for="aperture">Aperture (N) f-number</label>
+            <input type="number" id="aperture" placeholder="e.g., 1.8" step="0.1">
+        </div>
+        <div class="input-group-split">
+            <div class="input-group">
+                <label for="sensorWidth">Sensor Width (px)</label>
+                <input type="number" id="sensorWidth" placeholder="e.g., 6000">
+            </div>
+            <div class="input-group">
+                <label for="sensorHeight">Sensor Height (px)</label>
+                <input type="number" id="sensorHeight" placeholder="e.g., 4000">
+            </div>
+        </div>
+        
+        <hr>
+
+        <h2>3. Target</h2>
+        <div class="input-group">
+            <label for="targetName">Celestial Target Catalog Identifier</label>
+            <input type="text" id="targetName" placeholder="e.g., M42, M31, NGC 7000">
+            <div class="info">Use this for automatic coordinate lookup.</div>
+        </div>
+
+        <h3 class="or-divider"><span>OR</span></h3>
+
+        <div class="input-group">
+             <label>Custom Coordinates</label>
+            <div class="input-group-split">
+                <div class="input-group">
+                    <input type="number" id="customRA" placeholder="RA (°)" step="any">
+                </div>
+                <div class="input-group">
+                    <input type="number" id="customDec" placeholder="Dec (°)" step="any">
+                </div>
+            </div>
+             <div class="info">Use this to manually specify a target's position.</div>
+        </div>
+        
+        <!-- Action Button -->
+        <button id="calculateBtn" class="action-button">Calculate</button>
+        <!-- Error Display -->
+        <div class="error-message" id="calculatorError"></div>
+
+        <!-- Results Container -->
+        <div id="calculatorResults" style="display: none;">
+            <div class="results">
+                <h3>Maximum Exposure Time</h3>
+                <div id="resultText"></div>
+                <div id="simplifiedResultText"></div>
+            </div>
+            
+            <h3 id="sensorRepresentationHeading" style="display: none;">Lens Adjusted Sensor Representation</h3>
+            
+            <div class="sensor-grid-container" id="sensorGridContainer" style="display: none;">
+                <div class="constellation-bg" id="constellationBg"></div>
+                 <div class="sensor-grid" id="sensorGrid"></div>
+                <div class="loading-overlay" id="starmapLoading">
+                    <span>Starmap reprojection in progress...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page: Analyzer -->
+    <div id="analyzer-page" class="page">
+        <h2>Upload Astrophoto for Analysis</h2>
+        <div class="info">Please be patient. Analysis can take several minutes depending on image size.</div>
+        <div class="input-group">
+            <label for="imageUpload">Select a JPG or PNG file</label>
+            <input type="file" id="imageUpload" accept="image/jpeg, image/png">
+        </div>
+        <button id="analyzeBtn" class="action-button">Analyze Image</button>
+
+        <div id="analysis-status" style="display: none;">
+            <h3>Analysis Progress</h3>
+            <div class="progress-container">
+                <progress id="analysis-progress" value="0" max="100"></progress>
+                <span id="analysis-eta">ETA: --:--</span>
+            </div>
+            <div class="log-container" id="analysis-log"></div>
+        </div>
+        
+        <div class="error-message" id="analyzerError"></div>
+
+        <div id="analysis-output" class="analysis-output" style="display: none;">
+            <div id="annotated-image-container">
+                <h4>Analysis Complete: Annotated Image</h4>
+                <img id="annotatedImage" src="" alt="Annotated astrophoto">
+            </div>
+            <div id="annotation-list-container">
+                <h4>Identified Objects</h4>
+                <ul id="annotationList"></ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer>
+        <p>Made by</p>
+        <div class="creator-links">
+            <div class="creator">
+                <span>Atharv Gogia</span>
+                <div class="social-links">
+                    <a href="https://www.linkedin.com/in/atharv-gogia/" class="social-btn" target="_blank"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://github.com/Picklezoid" class="social-btn" target="_blank"><i class="fab fa-github"></i></a>
+                    <a href="https://gatharv.artstation.com/" class="social-btn" target="_blank"><i class="fab fa-artstation"></i></a>
+                </div>
+            </div>
+            <div class="creator">
+                <span>Kunal Krishna</span>
+                <div class="social-links">
+                    <a href="https://www.linkedin.com/in/kunal-krishna-927362325/" class="social-btn" target="_blank"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://github.com/" class="social-btn" target="_blank"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- Main Script -->
+<script>
+    // --- Page Navigation ---
+    const navLinks = document.querySelectorAll('.nav-link');
+    const pages = document.querySelectorAll('.page');
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const pageId = link.getAttribute('data-page');
+            pages.forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            navLinks.forEach(nav => nav.classList.remove('active'));
+            link.classList.add('active');
+        });
+    });
+
+    // --- NPF Calculator Logic ---
+    const calculateBtn = document.getElementById('calculateBtn');
+    const calculatorErrorEl = document.getElementById('calculatorError');
+    const latitudeEl = document.getElementById('latitude');
+    const longitudeEl = document.getElementById('longitude');
+    const pixelPitchEl = document.getElementById('pixelPitch');
+    const focalLengthEl = document.getElementById('focalLength');
+    const apertureEl = document.getElementById('aperture');
+    const sensorWidthEl = document.getElementById('sensorWidth');
+    const sensorHeightEl = document.getElementById('sensorHeight');
+    const targetNameEl = document.getElementById('targetName');
+    const customRAEl = document.getElementById('customRA');
+    const customDecEl = document.getElementById('customDec');
+
+    const resultsContainer = document.getElementById('calculatorResults');
+    const resultTextEl = document.getElementById('resultText');
+    const simplifiedResultTextEl = document.getElementById('simplifiedResultText');
+    const sensorGridEl = document.getElementById('sensorGrid');
+    const constellationBgEl = document.getElementById('constellationBg');
+    const starmapLoadingEl = document.getElementById('starmapLoading');
+    const sensorRepresentationHeading = document.getElementById('sensorRepresentationHeading');
+    const sensorGridContainer = document.getElementById('sensorGridContainer');
+
+    const toDegrees = (rad) => rad * (180 / Math.PI);
+
+    calculateBtn.addEventListener('click', async () => {
+        // UI Reset
+        calculatorErrorEl.textContent = '';
+        resultsContainer.style.display = 'none'; // Hide all results initially
+        sensorGridEl.innerHTML = '';
+        constellationBgEl.style.backgroundImage = 'none';
+        starmapLoadingEl.style.display = 'flex';
+        calculateBtn.disabled = true;
+        calculateBtn.textContent = 'Calculating...';
+        sensorRepresentationHeading.style.display = 'none';
+        sensorGridContainer.style.display = 'none';
+
+        // Collect and Validate Inputs
+        const lat = parseFloat(latitudeEl.value);
+        const lon = parseFloat(longitudeEl.value);
+        const P = parseFloat(pixelPitchEl.value);
+        const F = parseFloat(focalLengthEl.value);
+        const N = parseFloat(apertureEl.value);
+        const sensorWidthPx = parseInt(sensorWidthEl.value);
+        const sensorHeightPx = parseInt(sensorHeightEl.value);
+        const targetName = targetNameEl.value.trim();
+        const customRA = customRAEl.value ? parseFloat(customRAEl.value) : null;
+        const customDec = customDecEl.value ? parseFloat(customDecEl.value) : null;
+
+        const allFieldsValid = !isNaN(lat) && !isNaN(lon) && !isNaN(P) && !isNaN(F) && !isNaN(N) && !isNaN(sensorWidthPx) && !isNaN(sensorHeightPx);
+        const hasTarget = targetName || (customRA !== null && customDec !== null);
+
+        if (!allFieldsValid || !hasTarget) {
+            calculatorErrorEl.textContent = 'Please fill in all location, camera, lens, and target fields.';
+            calculateBtn.disabled = false;
+            calculateBtn.textContent = 'Calculate';
+            return;
+        }
+        
+        let payload = { latitude: lat, longitude: lon };
+        if (customRA !== null && customDec !== null) {
+            payload.ra = customRA;
+            payload.dec = customDec;
+        } else {
+            payload.target_name = targetName;
+        }
+
+        try {
+            // --- Step 1: Get Declination (Fast) ---
+            const declinationResponse = await fetch('/api/get_declination', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+
+            if (!declinationResponse.ok) {
+                const errData = await declinationResponse.json();
+                throw new Error(errData.error || 'Could not fetch declination.');
+            }
+            const declinationData = await declinationResponse.json();
+            
+            // --- Step 2: Perform Calculations and Update UI Immediately ---
+            resultsContainer.style.display = 'block';
+            const centerDec = declinationData.declination;
+            const simplifiedTime = ((35 * N) + (30 * P)) / F;
+            simplifiedResultTextEl.innerHTML = `Simplified NPF: <span>${simplifiedTime.toFixed(1)} s</span>`;
+
+            const sensorHeightMm = P * sensorHeightPx / 1000;
+            const fovHeightDeg = toDegrees(2 * Math.atan((sensorHeightMm / 2) / F));
+            const topDec = centerDec + (fovHeightDeg / 2);
+            const bottomDec = centerDec - (fovHeightDeg / 2);
+
+            const getNpfTime = (dec) => {
+                const deltaRad = dec * (Math.PI / 180);
+                return ((13.7 * P) + (7.9 * N)) / (F * Math.cos(deltaRad));
+            };
+
+            const centerTime = getNpfTime(centerDec);
+            const topTime = getNpfTime(topDec);
+            const bottomTime = getNpfTime(bottomDec);
+
+            resultTextEl.innerHTML = `Declination-Adjusted (Center): <span>${centerTime.toFixed(1)} s</span>`;
+            sensorGridEl.innerHTML = `
+                <div class="sensor-cell"><strong>${topTime.toFixed(1)} s</strong><span>(${topDec.toFixed(1)}°)</span></div>
+                <div class="sensor-cell"><strong>${topTime.toFixed(1)} s</strong><span>(${topDec.toFixed(1)}°)</span></div>
+                <div class="sensor-cell"><strong>${topTime.toFixed(1)} s</strong><span>(${topDec.toFixed(1)}°)</span></div>
+                <div class="sensor-cell"><strong>${centerTime.toFixed(1)} s</strong><span>(${centerDec.toFixed(1)}°)</span></div>
+                <div class="sensor-cell"><strong>${centerTime.toFixed(1)} s</strong><span>(${centerDec.toFixed(1)}°)</span></div>
+                <div class="sensor-cell"><strong>${centerTime.toFixed(1)} s</strong><span>(${centerDec.toFixed(1)}°)</span></div>
+                <div class="sensor-cell"><strong>${bottomTime.toFixed(1)} s</strong><span>(${bottomDec.toFixed(1)}°)</span></div>
+                <div class="sensor-cell"><strong>${bottomTime.toFixed(1)} s</strong><span>(${bottomDec.toFixed(1)}°)</span></div>
+                <div class="sensor-cell"><strong>${bottomTime.toFixed(1)} s</strong><span>(${bottomDec.toFixed(1)}°)</span></div>`;
+            sensorRepresentationHeading.style.display = 'block';
+            sensorGridContainer.style.display = 'grid';
+
+            // --- Step 3: Fetch Skymap Image in the background (Slow) ---
+            const skymapPayload = { ...payload, focal_length: F, sensor_width_px: sensorWidthPx, sensor_height_px: sensorHeightPx, pixel_pitch: P };
+            fetch('/api/get_skymap_crop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(skymapPayload)
+            })
+            .then(response => {
+                if (!response.ok) { throw new Error('Skymap generation failed.'); }
+                return response.blob();
+            })
+            .then(imageBlob => {
+                const imageUrl = URL.createObjectURL(imageBlob);
+                constellationBgEl.style.backgroundImage = `url(${imageUrl})`;
+                starmapLoadingEl.style.display = 'none';
+            })
+            .catch(error => {
+                console.error("Skymap Error:", error);
+                starmapLoadingEl.innerHTML = '<span>Could not load starmap.</span>';
+            });
+
+        } catch (error) {
+            calculatorErrorEl.textContent = error.message;
+            resultsContainer.style.display = 'none';
+        } finally {
+            calculateBtn.disabled = false;
+            calculateBtn.textContent = 'Calculate';
+        }
+    });
+
+    // --- Image Analyzer Logic ---
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const imageUploadEl = document.getElementById('imageUpload');
+    const analyzerErrorEl = document.getElementById('analyzerError');
+    const statusContainer = document.getElementById('analysis-status');
+    const progressBar = document.getElementById('analysis-progress');
+    const etaEl = document.getElementById('analysis-eta');
+    const logContainer = document.getElementById('analysis-log');
+    const outputContainer = document.getElementById('analysis-output');
+    const annotatedImageContainer = document.getElementById('annotated-image-container');
+    const annotatedImageEl = document.getElementById('annotatedImage');
+    const annotationListEl = document.getElementById('annotationList');
+
+    analyzeBtn.addEventListener('click', async () => {
+        analyzerErrorEl.textContent = '';
+        outputContainer.style.display = 'none';
+        
+        const file = imageUploadEl.files[0];
+        if (!file) {
+            analyzerErrorEl.textContent = 'Please select an image file.';
+            return;
+        }
+
+        analyzeBtn.disabled = true;
+        analyzeBtn.textContent = 'Analyzing...';
+        statusContainer.style.display = 'block';
+        logContainer.innerHTML = '';
+        
+        const addLog = (message) => {
+            logContainer.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+        };
+
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            addLog('Uploading image...');
+            progressBar.value = 5;
+            
+            const uploadResponse = await fetch('/api/upload', { method: 'POST', body: formData });
+            const uploadData = await uploadResponse.json();
+            if (!uploadResponse.ok) throw new Error(uploadData.error || 'Image upload failed.');
+            
+            const subId = uploadData.sub_id;
+            addLog(`Upload successful. Submission ID: ${subId}`);
+            progressBar.value = 20;
+
+            let jobStatus = 'pending';
+            let jobId = null;
+            let annotatedUrl = null;
+
+            while (jobStatus !== 'success' && jobStatus !== 'failure') {
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                
+                addLog(`Checking status for sub ID ${subId}...`);
+                const statusResponse = await fetch(`/api/status/${subId}`);
+                const statusData = await statusResponse.json();
+                if (!statusResponse.ok) throw new Error(statusData.error || 'Failed to get status.');
+                
+                jobStatus = statusData.status;
+                jobId = statusData.job_id;
+                annotatedUrl = statusData.annotated_image_url;
+                
+                let progress = progressBar.value;
+                if (jobStatus === 'solving') {
+                    progress = Math.min(80, progress + 5);
+                    addLog('Plate solving in progress...');
+                } else if (jobStatus === 'pending' || !jobId) {
+                    progress = Math.min(40, progress + 2);
+                    addLog('Job is queued...');
+                }
+                progressBar.value = progress;
+                
+                if (jobStatus === 'success' || jobStatus === 'failure') {
+                    break;
+                }
+            }
+
+            if (jobStatus === 'failure') {
+                throw new Error('Astrometry.net could not solve the image.');
+            }
+            
+            addLog('Success! Fetching annotations...');
+            progressBar.value = 90;
+
+            const resultsResponse = await fetch(`/api/results/${jobId}`);
+            const resultsData = await resultsResponse.json();
+            if (!resultsResponse.ok) throw new Error(resultsData.error || 'Failed to fetch results.');
+
+            annotatedImageEl.src = annotatedUrl;
+            
+            if (resultsData.annotations && resultsData.annotations.length > 0) {
+                annotationListEl.innerHTML = '';
+                resultsData.annotations.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = `${item.names.join(', ')}`;
+                    annotationListEl.appendChild(li);
+                });
+            } else {
+                annotationListEl.innerHTML = '<li>No specific objects identified.</li>';
+            }
+            
+            progressBar.value = 100;
+            addLog('Analysis complete.');
+            outputContainer.style.display = 'block';
+
+        } catch (error) {
+            analyzerErrorEl.textContent = `Error: ${error.message}.`;
+            addLog(`Failure: ${error.message}`);
+        } finally {
+            analyzeBtn.disabled = false;
+            analyzeBtn.textContent = 'Analyze Image';
+        }
+    });
+
+</script>
+</body>
+</html>
+

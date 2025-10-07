@@ -1,0 +1,46 @@
+Advanced NPF Calculator & Astrophoto Analyzer
+This project consists of a feature-rich frontend for calculating astrophotography exposure times and a backend service to analyze uploaded astrophotos using the Astrometry.net API.
+
+The backend now uses a single, high-resolution, pre-composited local skymap and advanced astronomical reprojection to generate perfectly framed, distortion-free images of your celestial target.
+
+Project Files
+index.html: The main web application file (frontend).
+
+styles.css: The stylesheet for the web application.
+
+backend.py: The Python Flask server that handles all API requests and image processing.
+
+README.md: This setup guide.
+
+composite_skymap_16k.png: (You must provide this) The single, pre-composited high-resolution skymap image.
+
+Setup Instructions
+Step 1: Provide the Composite Skymap
+This is a mandatory step for the constellation image feature to work.
+
+Create or acquire your high-resolution skymap image that already has the starmap, constellation figures, and coordinate grid combined. An 8k (8192x4096) image is recommended for a good balance of performance and quality.
+
+Important: Save this file in your project folder and name it exactly composite_skymap_16k.png.
+
+Step 2: Get an Astrometry.net API Key
+The image analysis feature requires an API key from Astrometry.net.
+
+Go to http://nova.astrometry.net/ and create a free account.
+
+Log in, click your username, and go to "My profile".
+
+Your API key is listed on this page. The backend code (backend.py) has already been updated with the key you provided (ijfeegmtjoendrmy).
+
+Step 3: Install Python Dependencies
+The backend requires several Python libraries. Open your terminal or command prompt and run the following command to install them:
+
+pip install Flask flask-cors requests astropy Pillow reproject numpy
+
+Step 4: Run the Backend Server
+Navigate to the project directory in your terminal (the folder where you saved all the files).
+
+Run the backend server with the following command:
+
+python backend.py
+
+Made by Atharv Gogia & Kunal Krishna
