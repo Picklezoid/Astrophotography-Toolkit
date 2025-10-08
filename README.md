@@ -1,7 +1,7 @@
-Astrophotography Toolkit (Work in Progress)
+Astrophotography Toolkit (Work in Progress)-
 This is a web-based toolkit for astrophotographers. It includes an NPF exposure calculator with a skymap preview and an image analyzer powered by Astrometry.net.
 
-How It Works
+How It Works-
 The application runs as a local web server on your machine. The backend is built with Python (Flask) and uses libraries like Astropy and Reproject to handle astronomical calculations. The frontend is simple HTML, CSS, and JavaScript.
 
 The skymap preview feature works by intelligently loading and reprojecting sections from a high-resolution, tiled sky map to match your camera's field of view.
