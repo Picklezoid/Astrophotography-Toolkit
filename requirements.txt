@@ -1,0 +1,7 @@
+Flask
+flask-cors
+requests
+astropy
+Pillow
+reproject
+numpy
