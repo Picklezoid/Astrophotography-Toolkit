@@ -108,7 +108,7 @@
                 <div class="constellation-bg" id="constellationBg"></div>
                  <div class="sensor-grid" id="sensorGrid"></div>
                 <div class="loading-overlay" id="starmapLoading">
-                    <span>Starmap reprojection in progress...</span>
+                    <span>Starmap projection in progress, a sensor representation image will replace this.</span>
                 </div>
             </div>
         </div>
@@ -163,7 +163,7 @@
                 <span>Kunal Krishna</span>
                 <div class="social-links">
                     <a href="https://www.linkedin.com/in/kunal-krishna-927362325/" class="social-btn" target="_blank"><i class="fab fa-linkedin"></i></a>
-                    <a href="https://github.com/" class="social-btn" target="_blank"><i class="fab fa-github"></i></a>
+                    <a href="https://github.com/kunal12krishna" class="social-btn" target="_blank"><i class="fab fa-github"></i></a>
                 </div>
             </div>
         </div>
@@ -215,10 +215,11 @@
     calculateBtn.addEventListener('click', async () => {
         // UI Reset
         calculatorErrorEl.textContent = '';
-        resultsContainer.style.display = 'none'; // Hide all results initially
+        resultsContainer.style.display = 'none';
         sensorGridEl.innerHTML = '';
         constellationBgEl.style.backgroundImage = 'none';
         starmapLoadingEl.style.display = 'flex';
+        starmapLoadingEl.innerHTML = '<span>Starmap reprojection in progress. A higher-quality image will replace this.</span>'; // Reset loading text
         calculateBtn.disabled = true;
         calculateBtn.textContent = 'Calculating...';
         sensorRepresentationHeading.style.display = 'none';

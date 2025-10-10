@@ -8,7 +8,8 @@ The skymap preview feature works by intelligently loading and reprojecting secti
 
 Local Setup
 1. Skymap Tiles
-Download the skymapsplit folder and composite_skymap_16k.png from "https://drive.google.com/drive/folders/1rrDNBE-_NzLOH3oTllvlRFs0W_YL9cPu?usp=sharing" and place it in the root folder. (Optional for sensor visual representation)
+~~Download the skymapsplit folder and composite_skymap_16k.png from "https://drive.google.com/drive/folders/1rrDNBE-_NzLOH3oTllvlRFs0W_YL9cPu?usp=sharing" and place it in the root folder. (Optional for sensor visual representation)~~
+Download only the composite_skymap_16k.png from "https://drive.google.com/drive/folders/1rrDNBE-_NzLOH3oTllvlRFs0W_YL9cPu?usp=sharing" and place it in the root folder.(Optional for sensor visual representation)
 
 2. API Key
 The image analyzer requires a free API key from nova.astrometry.net. You must place this key in a config.py file.

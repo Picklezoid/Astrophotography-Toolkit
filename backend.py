@@ -28,19 +28,43 @@ try:
 except ImportError:
     API_KEY = None
 
-# Global State
+# Global State for pre-loading the skymap
 session_key = None
+input_data = None
+input_wcs = None
 
-# --- Static File Routes ---
-@app.route('/')
-def serve_index():
-    # Serve main HTML file
-    return send_from_directory('.', 'index.html')
+# --- Core Service Functions ---
+def load_skymap_data():
+    """Pre-loads the single skymap image and computes its WCS at server startup."""
+    global input_data, input_wcs
+    
+    composite_map_path = 'composite_skymap_16k.png'
+    print(f"Attempting to pre-load skymap: {composite_map_path}")
 
-@app.route('/<path:path>')
-def serve_static(path):
-    # Serve other static files (CSS, etc.)
-    return send_from_directory('.', path)
+    if not os.path.exists(composite_map_path):
+        print(f"FATAL: Skymap file not found at '{composite_map_path}'. The skymap feature will not work.")
+        return
+
+    try:
+        composite_image = Image.open(composite_map_path)
+        # Separate the RGB channels for reprojection
+        r, g, b = composite_image.split()
+        input_data = (np.array(r), np.array(g), np.array(b))
+
+        # WCS Definition for the single full-sky image
+        w = WCS(naxis=2)
+        w.wcs.crpix = [(composite_image.width + 1) / 2, (composite_image.height + 1) / 2]
+        w.wcs.cdelt = np.array([-360. / composite_image.width, -180. / composite_image.height])
+        w.wcs.crval = [0, 0]
+        w.wcs.ctype = ["RA---CAR", "DEC--CAR"]
+        input_wcs = w
+        
+        print("Skymap data pre-loaded successfully.")
+    except Exception as e:
+        print(f"CRITICAL ERROR during skymap pre-load: {e}")
+        input_data = None
+        input_wcs = None
+
 
 def get_apparent_coords(data):
     # Calculate apparent RA/Dec from observer location and time
@@ -54,10 +78,25 @@ def get_apparent_coords(data):
     apparent_icrs = base_coords.transform_to(altaz_frame).transform_to('icrs')
     return apparent_icrs
 
+# --- Static File Routes ---
+@app.route('/')
+def serve_index():
+    # Serve main HTML file
+    return send_from_directory('.', 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    # Serve other static files (CSS, etc.)
+    return send_from_directory('.', path)
+
+
 # --- API Endpoints ---
 @app.route('/api/get_skymap_crop', methods=['POST'])
 def get_skymap_crop():
-    # Reproject a view of the sky using a tiled skymap system
+    # Reproject a view of the sky using the pre-loaded single skymap
+    if input_data is None or input_wcs is None:
+        return jsonify({'error': 'Skymap data is not loaded on the server. Check server logs.'}), 500
+        
     try:
         data = request.get_json()
         focal_length = data.get('focal_length')
@@ -74,55 +113,6 @@ def get_skymap_crop():
         fov_width_deg = 2 * math.degrees(math.atan((pixel_pitch * sensor_width_px / 2000) / focal_length))
         fov_height_deg = 2 * math.degrees(math.atan((pixel_pitch * sensor_height_px / 2000) / focal_length))
         
-        # FOV Corner Identification
-        half_fov_w = fov_width_deg / 2
-        half_fov_h = fov_height_deg / 2
-        center_ra, center_dec = coords.ra.degree, coords.dec.degree
-
-        corners = [
-            (center_ra - half_fov_w, center_dec + half_fov_h), (center_ra + half_fov_w, center_dec + half_fov_h),
-            (center_ra - half_fov_w, center_dec - half_fov_h), (center_ra + half_fov_w, center_dec - half_fov_h),
-        ]
-
-        # Required Tile Calculation
-        needed_tiles = set()
-        for ra, dec in corners:
-            ra = ra % 360
-            dec = max(-90, min(90, dec))
-            col = math.floor(ra / 45)
-            row = 0 if dec >= 45 else 1 if dec >= 0 else 2 if dec >= -45 else 3
-            needed_tiles.add((row, col))
-
-        if not needed_tiles:
-             return jsonify({'error': 'Could not determine required tiles.'}), 500
-
-        # In-Memory Tile Stitching
-        min_row, max_row = min(r for r,c in needed_tiles), max(r for r,c in needed_tiles)
-        min_col, max_col = min(c for r,c in needed_tiles), max(c for r,c in needed_tiles)
-        
-        rows, cols = (max_row - min_row + 1), (max_col - min_col + 1)
-        tile_width, tile_height = 2048, 2048
-        composite_image = Image.new('RGB', (cols * tile_width, rows * tile_height))
-
-        for r_idx, r in enumerate(range(min_row, max_row + 1)):
-            for c_idx, c in enumerate(range(min_col, max_col + 1)):
-                tile_path = os.path.join('skymapsplit', f'skymap_tile_{r}_{c}.jpg')
-                if (r,c) in needed_tiles and os.path.exists(tile_path):
-                    tile_img = Image.open(tile_path)
-                    composite_image.paste(tile_img, (c_idx * tile_width, r_idx * tile_height))
-        
-        input_data = np.array(composite_image)
-
-        # WCS Definition for Stitched Composite
-        stitched_wcs = WCS(naxis=2)
-        stitched_wcs.wcs.crpix = [((cols * tile_width) + 1) / 2, ((rows * tile_height) + 1) / 2]
-        stitched_center_ra = (min_col * 45) + (cols * 45 / 2)
-        dec_centers = [67.5, 22.5, -22.5, -67.5]
-        stitched_center_dec = sum(dec_centers[r] for r in range(min_row, max_row + 1)) / rows
-        stitched_wcs.wcs.crval = [stitched_center_ra, stitched_center_dec]
-        stitched_wcs.wcs.cdelt = np.array([-45. / tile_width, 45. / tile_height])
-        stitched_wcs.wcs.ctype = ["RA---CAR", "DEC--CAR"]
-        
         # Output WCS Definition
         output_wcs = WCS(naxis=2)
         output_wcs.wcs.crpix = [(sensor_width_px + 1) / 2, (sensor_height_px + 1) / 2]
@@ -133,11 +123,16 @@ def get_skymap_crop():
         # Reprojection
         print(f"Reprojecting for target at RA {coords.ra.degree:.2f}, Dec {coords.dec.degree:.2f}...")
         output_shape = (sensor_height_px, sensor_width_px)
-        reprojected_data_r, _ = reproject_interp((input_data[:,:,0], stitched_wcs), output_wcs, shape_out=output_shape)
-        reprojected_data_g, _ = reproject_interp((input_data[:,:,1], stitched_wcs), output_wcs, shape_out=output_shape)
-        reprojected_data_b, _ = reproject_interp((input_data[:,:,2], stitched_wcs), output_wcs, shape_out=output_shape)
+        
+        # DEFINITIVE FIX: Reproject each color channel individually.
+        # The input to reproject_interp must be a tuple of (data, wcs).
+        r_data, _ = reproject_interp((input_data[0], input_wcs), output_wcs, shape_out=output_shape)
+        g_data, _ = reproject_interp((input_data[1], input_wcs), output_wcs, shape_out=output_shape)
+        b_data, _ = reproject_interp((input_data[2], input_wcs), output_wcs, shape_out=output_shape)
+        
+        # Stack the reprojected channels back into an RGB image.
+        reprojected_data = np.stack([r_data, g_data, b_data], axis=-1)
 
-        reprojected_data = np.stack([reprojected_data_r, reprojected_data_g, reprojected_data_b], axis=-1)
         reprojected_data = np.nan_to_num(reprojected_data).astype(np.uint8)
         print("Reprojection complete.")
 
@@ -235,6 +230,7 @@ def get_results(job_id):
 # --- Server Startup ---
 if __name__ == '__main__':
     print("Starting Flask server...")
+    load_skymap_data()
     if not API_KEY or API_KEY == "YOUR_API_KEY_HERE":
         print("\nWARNING: Astrometry.net API key not found.")
         print("Please create and fill in the 'config.py' file with your API key.\n")

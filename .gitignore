@@ -11,11 +11,8 @@ venv/
 .idea/
 .vscode/
 
-# Sensitive configuration
-# This is the most important line - it prevents your API key from being uploaded
-config.py
-
 # Local data files - do not commit the skymap tiles
 skymap_tile_*.jpg
 composite_skymap_8k.jpg
 composite_skymap_16k.png
+skymapsplit/
